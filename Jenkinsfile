@@ -5,7 +5,7 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                git 'https://github.com/ashhwiithac22/SonarQube.git'
+                git branch: 'main', url: 'https://github.com/ashhwiithac22/SonarQube.git'
             }
         }
 
