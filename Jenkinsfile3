@@ -15,20 +15,9 @@ pipeline {
             }
         }
 
-        stage('Install Dependencies') {
-            steps {
-                echo "Installing Python dependencies..."
-                // No virtual environment, install system-wide
-                sh '''
-                    sudo apt-get update
-                    sudo apt-get install -y python3-pip
-                    pip3 install --upgrade pip pytest pytest-cov
-                '''
-            }
-        }
-
         stage('Run Unit Tests & Coverage') {
             steps {
+                echo "Running tests and generating coverage..."
                 sh 'pytest --cov=. --cov-report=xml:coverage.xml'
             }
         }
