@@ -18,23 +18,18 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 echo "Installing Python dependencies..."
-                // use bash so that 'source' works
+                // No virtual environment, install system-wide
                 sh '''
-                    #!/bin/bash
-                    python3 -m venv venv
-                    source venv/bin/activate
-                    pip install --upgrade pip pytest pytest-cov
+                    sudo apt-get update
+                    sudo apt-get install -y python3-pip
+                    pip3 install --upgrade pip pytest pytest-cov
                 '''
             }
         }
 
         stage('Run Unit Tests & Coverage') {
             steps {
-                sh '''
-                    #!/bin/bash
-                    source venv/bin/activate
-                    pytest --cov=. --cov-report=xml:coverage.xml
-                '''
+                sh 'pytest --cov=. --cov-report=xml:coverage.xml'
             }
         }
 
@@ -62,14 +57,13 @@ pipeline {
 
     post {
         always {
-            echo "Cleaning up virtual environment..."
-            sh 'rm -rf venv'
+            echo "Build finished. Check console output and SonarQube report!"
         }
         success {
             echo "Build SUCCESS - SonarQube Quality Gate passed!"
         }
         failure {
-            echo "Build FAILED - Check console output and SonarQube report!"
+            echo "Build FAILED!"
         }
     }
 }
