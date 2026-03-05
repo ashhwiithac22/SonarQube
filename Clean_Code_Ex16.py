@@ -1,26 +1,28 @@
-# Objective: Fix Bugs, Code Smells, and improve coverage
+# Clean_Code_Ex16.py
+# Exercise 16 - Fixed Code
 
 import logging
 
-# Configure logging instead of using print statements
+# Setup proper logging
 logging.basicConfig(level=logging.INFO)
 
-# BAD PRACTICE FIX: API_KEY should ideally come from environment variable
-API_KEY = "12345-ABCDE-SECRET"  # Dummy key for demo
+# BAD PRACTICE FIXED: Removed hardcoded API key
+API_KEY = None  # Keep keys secret or use environment variables
 
-# FIX: Handle exceptions specifically
+# Fix Empty except block
 def safe_divide(a, b):
     try:
         return a / b
     except ZeroDivisionError:
-        logging.error("Division by zero attempted")
+        logging.warning("Division by zero attempted!")
         return None
 
-# FIX: Removed unused variable
+# Fix unused variable
 def add_numbers(a, b):
-    return a + b
+    result = a + b
+    return result
 
-# FIX: Logging instead of print
+# Replace print statements with logging
 def divide_numbers(a, b):
     if b == 0:
         logging.warning("Cannot divide by zero")
