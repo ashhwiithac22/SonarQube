@@ -10,7 +10,12 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                sh 'pip install pytest'
+                sh '''
+                python3 -m venv venv
+                source venv/bin/activate
+                pip install --upgrade pip
+                pip install pytest
+                '''
             }
         }
 
@@ -26,7 +31,10 @@ pipeline {
 
         stage('Run Unit Tests') {
             steps {
-                sh 'pytest --junitxml=reports/results.xml'
+                sh '''
+                source venv/bin/activate
+                pytest --junitxml=reports/results.xml
+                '''
             }
         }
 
