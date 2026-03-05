@@ -1,8 +1,6 @@
-# Exercise 16: Unit tests to improve coverage
-# Use pytest to run: pytest test_bad_code_ex16.py
-
+# test_clean_code_ex16.py
 import pytest
-from Bad_Code_Ex16 import add_numbers, divide_numbers, safe_divide
+from Clean_Code_Ex16 import add_numbers, divide_numbers, safe_divide
 
 def test_add_numbers():
     assert add_numbers(2, 3) == 5
