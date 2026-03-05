@@ -21,7 +21,7 @@ pipeline {
         stage('SonarQube Analysis') {
             environment {
                 SONARQUBE_HOST_URL = 'http://localhost:9000'
-                SONARQUBE_AUTH_TOKEN = 'YOUR_SONAR_TOKEN'
+                SONARQUBE_AUTH_TOKEN = 'squ_56448c004d3c95ec04634cea362f9c8039919e60'
             }
             steps {
                 sh '. venv/bin/activate && sonar-scanner -Dsonar.projectKey=Ex16_Clean_Code -Dsonar.sources=.'
