@@ -2,13 +2,11 @@ pipeline {
     agent any
 
     environment {
-        SONARQUBE_HOST_URL = 'http://localhost:9000'  // Replace with your SonarQube URL
-        SONARQUBE_AUTH_TOKEN = 'squ_56448c004d3c95ec04634cea362f9c8039919e60'  // Your token
-        VENV_PATH = "${WORKSPACE}/venv"
+        SONARQUBE_HOST_URL = 'http://localhost:9000'
+        SONARQUBE_AUTH_TOKEN = 'squ_56448c004d3c95ec04634cea362f9c8039919e60'
     }
 
     stages {
-
         stage('Checkout Code') {
             steps {
                 echo "Checking out code from GitHub..."
@@ -17,12 +15,14 @@ pipeline {
             }
         }
 
-        stage('Setup Python Environment') {
+        stage('Install Dependencies') {
             steps {
-                echo "Creating Python virtual environment and installing dependencies..."
+                echo "Installing Python dependencies..."
+                // use bash so that 'source' works
                 sh '''
-                    python3 -m venv $VENV_PATH
-                    source $VENV_PATH/bin/activate
+                    #!/bin/bash
+                    python3 -m venv venv
+                    source venv/bin/activate
                     pip install --upgrade pip pytest pytest-cov
                 '''
             }
@@ -30,9 +30,9 @@ pipeline {
 
         stage('Run Unit Tests & Coverage') {
             steps {
-                echo "Running Pytest with coverage..."
                 sh '''
-                    source $VENV_PATH/bin/activate
+                    #!/bin/bash
+                    source venv/bin/activate
                     pytest --cov=. --cov-report=xml:coverage.xml
                 '''
             }
@@ -40,21 +40,19 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                echo "Running SonarScanner analysis..."
                 sh '''
                     /opt/sonar-scanner/bin/sonar-scanner \
-                        -Dsonar.projectKey=Ex16_Clean_as_You_Go \
-                        -Dsonar.sources=. \
-                        -Dsonar.host.url=$SONARQUBE_HOST_URL \
-                        -Dsonar.login=$SONARQUBE_AUTH_TOKEN \
-                        -Dsonar.python.coverage.reportPaths=coverage.xml
+                    -Dsonar.projectKey=Ex16_Clean_as_You_Go \
+                    -Dsonar.sources=. \
+                    -Dsonar.host.url=$SONARQUBE_HOST_URL \
+                    -Dsonar.login=$SONARQUBE_AUTH_TOKEN \
+                    -Dsonar.python.coverage.reportPaths=coverage.xml
                 '''
             }
         }
 
         stage('Quality Gate') {
             steps {
-                echo "Checking SonarQube Quality Gate..."
                 timeout(time: 2, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
@@ -65,7 +63,7 @@ pipeline {
     post {
         always {
             echo "Cleaning up virtual environment..."
-            sh 'rm -rf $VENV_PATH'
+            sh 'rm -rf venv'
         }
         success {
             echo "Build SUCCESS - SonarQube Quality Gate passed!"
