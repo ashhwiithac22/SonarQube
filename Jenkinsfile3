@@ -1,40 +1,50 @@
 pipeline {
     agent any
 
+    environment {
+        SONARQUBE_ENV = 'My Sonar Server'
+        SONAR_TOKEN_ID = 'sonar-token'
+    }
+
     stages {
         stage('Checkout') {
             steps {
+                echo 'Checking out code from GitHub...'
                 git branch: 'main', url: 'https://github.com/ashhwiithac22/SonarQube.git'
             }
         }
 
         stage('Install Dependencies') {
             steps {
+                echo 'Installing pytest...'
+                sh 'pip install --upgrade pip pytest'
+            }
+        }
+
+        stage('Run Unit Tests') {
+            steps {
+                echo 'Running unit tests for Exercise 16...'
                 sh '''
-                python3 -m venv venv
-                source venv/bin/activate
-                pip install --upgrade pip
-                pip install pytest
+                mkdir -p reports
+                pytest exercise16.py --junitxml=reports/results.xml --cov=.
                 '''
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('My Sonar Server') {
-                    withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-                        sh "/opt/sonar-scanner/bin/sonar-scanner -Dsonar.login=$SONAR_TOKEN"
+                echo 'Starting SonarQube analysis...'
+                withSonarQubeEnv(SONARQUBE_ENV) {
+                    withCredentials([string(credentialsId: SONAR_TOKEN_ID, variable: 'SONAR_TOKEN')]) {
+                        sh """
+                        /opt/sonar-scanner/bin/sonar-scanner \
+                        -Dsonar.projectKey=Exercise16-Clean-as-You-Go \
+                        -Dsonar.sources=. \
+                        -Dsonar.python.coverage.reportPaths=reports/results.xml \
+                        -Dsonar.login=$SONAR_TOKEN
+                        """
                     }
                 }
-            }
-        }
-
-        stage('Run Unit Tests') {
-            steps {
-                sh '''
-                source venv/bin/activate
-                pytest --junitxml=reports/results.xml
-                '''
             }
         }
 
@@ -42,6 +52,7 @@ pipeline {
             steps {
                 script {
                     timeout(time: 5, unit: 'MINUTES') {
+                        echo 'Waiting for SonarQube Quality Gate...'
                         waitForQualityGate(abortPipeline: true)
                     }
                 }
