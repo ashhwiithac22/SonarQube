@@ -9,16 +9,16 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                echo "Checking out code from GitHub..."
-                git branch: 'main',
-                    url: 'https://github.com/ashhwiithac22/SonarQube.git'
+                git branch: 'main', url: 'https://github.com/ashhwiithac22/SonarQube.git'
             }
         }
 
         stage('Run Unit Tests & Coverage') {
             steps {
-                echo "Running tests and generating coverage..."
-                sh 'pytest --cov=. --cov-report=xml:coverage.xml'
+                sh '''
+                    source venv/bin/activate
+                    pytest --cov=. --cov-report=xml:coverage.xml
+                '''
             }
         }
 
@@ -37,7 +37,7 @@ pipeline {
 
         stage('Quality Gate') {
             steps {
-                timeout(time: 2, unit: 'MINUTES') {
+                timeout(time: 5, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
