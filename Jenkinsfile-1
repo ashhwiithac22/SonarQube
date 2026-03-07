@@ -18,12 +18,11 @@ pipeline {
                     script {
                         def scannerHome = tool 'SonarScanner'
                         
-                        // Using the new token
+                        // REMOVED sonar.branch.name - Community Edition doesn't support it
                         sh """
                             ${scannerHome}/bin/sonar-scanner \
                             -Dsonar.projectKey=exercise13a \
                             -Dsonar.projectName="Exercise 13A" \
-                            -Dsonar.branch.name=main \
                             -Dsonar.sources=. \
                             -Dsonar.language=py \
                             -Dsonar.python.version=3 \
@@ -31,7 +30,7 @@ pipeline {
                             -Dsonar.login=squ_2c3ab65244156f297807babd9402e31963835867
                         """
                         
-                        echo "✅ Analysis submitted with new token!"
+                        echo "✅ Analysis submitted successfully!"
                     }
                 }
             }
@@ -40,9 +39,9 @@ pipeline {
         stage('Verify') {
             steps {
                 script {
-                    echo "⏳ Waiting 15 seconds for SonarQube to process..."
-                    sleep(15)
-                    echo "📊 View your project at: http://localhost:9000/dashboard?id=exercise13a"
+                    echo "⏳ Waiting 10 seconds for processing..."
+                    sleep(10)
+                    echo "📊 View results at: http://localhost:9000/dashboard?id=exercise13a"
                 }
             }
         }
@@ -52,12 +51,12 @@ pipeline {
         always {
             echo '''
             ╔══════════════════════════════════════════════════════════╗
-            ║  🎉 EXERCISE 13A PIPELINE EXECUTED!                     ║
+            ║  ✅ EXERCISE 13A COMPLETED SUCCESSFULLY!                ║
             ║                                                          ║
-            ║  📊 CHECK YOUR RESULTS:                                 ║
+            ║  📊 SONARQUBE DASHBOARD:                                ║
             ║  http://localhost:9000/dashboard?id=exercise13a         ║
             ║                                                          ║
-            ║  The project should now show with "main" branch!        ║
+            ║  The project will show all files in the default branch  ║
             ╚══════════════════════════════════════════════════════════╝
             '''
             cleanWs()
