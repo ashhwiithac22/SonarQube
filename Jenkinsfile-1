@@ -1,0 +1,54 @@
+pipeline {
+    agent any
+    
+    tools {
+        // Configure JDK if needed for your Java version
+        // jdk 'JDK-11' // Uncomment and adjust if you have JDK configured
+    }
+    
+    environment {
+        // Define scanner tool from Global Tool Configuration
+        scannerHome = tool 'SonarScanner'
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv(installationName: 'My Sonar Server') {
+                    // For Maven project
+                    sh 'mvn clean verify sonar:sonar'
+                    
+                    // Alternative if mvn not in PATH:
+                    // sh "${tool 'maven'}/bin/mvn clean verify sonar:sonar"
+                }
+            }
+        }
+        
+        // Optional: Add Quality Gate check (adds pipeline robustness)
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo 'SonarQube analysis completed!'
+        }
+        success {
+            echo 'Pipeline succeeded! Check SonarQube dashboard.'
+        }
+        failure {
+            echo 'Pipeline failed. Check Jenkins logs.'
+        }
+    }
+}
