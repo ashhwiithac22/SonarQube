@@ -1,6 +1,11 @@
 pipeline {
     agent any
     
+    environment {
+        // Add your SonarQube token as an environment variable
+        SONAR_TOKEN = credentials('sonarqube-token')  // This references the token you saved in Jenkins
+    }
+    
     stages {
         stage('Checkout') {
             steps {
@@ -18,7 +23,7 @@ pipeline {
                     script {
                         def scannerHome = tool 'SonarScanner'
                         
-                        // This will CREATE the project with MAIN branch properly set
+                        // Add the token to the scanner command
                         sh """
                             ${scannerHome}/bin/sonar-scanner \
                             -Dsonar.projectKey=exercise13a \
@@ -27,7 +32,8 @@ pipeline {
                             -Dsonar.sources=. \
                             -Dsonar.language=py \
                             -Dsonar.python.version=3 \
-                            -Dsonar.sourceEncoding=UTF-8
+                            -Dsonar.sourceEncoding=UTF-8 \
+                            -Dsonar.login=${SONAR_TOKEN}
                         """
                         
                         echo "✅ Analysis submitted! Project will be created with 'main' branch"
