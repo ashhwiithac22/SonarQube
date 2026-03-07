@@ -4,10 +4,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                // Get the code from GitHub
                 checkout scm
-                
-                // Optional: Show what files we have
                 script {
                     echo "📂 Files checked out:"
                     sh 'ls -la'
@@ -17,38 +14,34 @@ pipeline {
         
         stage('SonarQube Analysis') {
             steps {
-                // Use the SonarQube environment configured in Jenkins
                 withSonarQubeEnv(installationName: 'My Sonar Server') {
                     script {
-                        // Get the SonarScanner tool
                         def scannerHome = tool 'SonarScanner'
                         
-                        // Run the analysis - NO BRANCH PARAMETERS for Community Edition
+                        // This will CREATE the project with MAIN branch properly set
                         sh """
                             ${scannerHome}/bin/sonar-scanner \
                             -Dsonar.projectKey=exercise13a \
                             -Dsonar.projectName="Exercise 13A" \
+                            -Dsonar.branch.name=main \
                             -Dsonar.sources=. \
                             -Dsonar.language=py \
-                            -Dsonar.python.version=3
+                            -Dsonar.python.version=3 \
+                            -Dsonar.sourceEncoding=UTF-8
                         """
                         
-                        echo "✅ Analysis submitted successfully!"
+                        echo "✅ Analysis submitted! Project will be created with 'main' branch"
                     }
                 }
             }
         }
         
-        // SIMPLE QUALITY GATE - NO TIMEOUT ISSUES
-        stage('Quality Gate') {
+        stage('Verify') {
             steps {
                 script {
-                    // Simple wait - no timeout errors
-                    echo "⏳ Waiting 10 seconds for SonarQube to process..."
-                    sleep(10)
-                    
-                    // Optional: Display the dashboard URL
-                    echo "📊 View results at: http://localhost:9000/dashboard?id=exercise13a"
+                    echo "⏳ Waiting 15 seconds for processing..."
+                    sleep(15)
+                    echo "📊 View your project at: http://localhost:9000/dashboard?id=exercise13a"
                 }
             }
         }
@@ -56,30 +49,16 @@ pipeline {
     
     post {
         always {
-            // Always show where to find results
             echo '''
             ╔══════════════════════════════════════════════════════════╗
-            ║  ✅ EXERCISE 13A COMPLETED SUCCESSFULLY!                ║
+            ║  ✅ EXERCISE 13A - READY TO VERIFY                      ║
             ║                                                          ║
-            ║  📊 SonarQube Dashboard:                                 ║
+            ║  📊 OPEN THIS URL IN YOUR BROWSER:                      ║
             ║  http://localhost:9000/dashboard?id=exercise13a         ║
             ║                                                          ║
-            ║  📝 Note: If you see "No main branch", just:            ║
-            ║  1. Click on the project in SonarQube                   ║
-            ║  2. Go to "Branches" tab                                 ║
-            ║  3. Click "Set Main Branch"                             ║
-            ║  4. Select "main"                                        ║
+            ║  The project should now show with "main" branch!        ║
             ╚══════════════════════════════════════════════════════════╝
             '''
-        }
-        success {
-            echo '🎉 Pipeline executed successfully!'
-        }
-        failure {
-            echo '❌ Pipeline failed. Check the logs above.'
-        }
-        cleanup {
-            // Clean up workspace
             cleanWs()
         }
     }
