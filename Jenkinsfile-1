@@ -1,11 +1,6 @@
 pipeline {
     agent any
     
-    environment {
-        // Add your SonarQube token as an environment variable
-        SONAR_TOKEN = credentials('sonarqube-token')  // This references the token you saved in Jenkins
-    }
-    
     stages {
         stage('Checkout') {
             steps {
@@ -23,7 +18,7 @@ pipeline {
                     script {
                         def scannerHome = tool 'SonarScanner'
                         
-                        // Add the token to the scanner command
+                        // Using the new token
                         sh """
                             ${scannerHome}/bin/sonar-scanner \
                             -Dsonar.projectKey=exercise13a \
@@ -33,10 +28,10 @@ pipeline {
                             -Dsonar.language=py \
                             -Dsonar.python.version=3 \
                             -Dsonar.sourceEncoding=UTF-8 \
-                            -Dsonar.login=${SONAR_TOKEN}
+                            -Dsonar.login=squ_2c3ab65244156f297807babd9402e31963835867
                         """
                         
-                        echo "✅ Analysis submitted! Project will be created with 'main' branch"
+                        echo "✅ Analysis submitted with new token!"
                     }
                 }
             }
@@ -45,7 +40,7 @@ pipeline {
         stage('Verify') {
             steps {
                 script {
-                    echo "⏳ Waiting 15 seconds for processing..."
+                    echo "⏳ Waiting 15 seconds for SonarQube to process..."
                     sleep(15)
                     echo "📊 View your project at: http://localhost:9000/dashboard?id=exercise13a"
                 }
@@ -57,15 +52,21 @@ pipeline {
         always {
             echo '''
             ╔══════════════════════════════════════════════════════════╗
-            ║  ✅ EXERCISE 13A - READY TO VERIFY                      ║
+            ║  🎉 EXERCISE 13A PIPELINE EXECUTED!                     ║
             ║                                                          ║
-            ║  📊 OPEN THIS URL IN YOUR BROWSER:                      ║
+            ║  📊 CHECK YOUR RESULTS:                                 ║
             ║  http://localhost:9000/dashboard?id=exercise13a         ║
             ║                                                          ║
             ║  The project should now show with "main" branch!        ║
             ╚══════════════════════════════════════════════════════════╝
             '''
             cleanWs()
+        }
+        success {
+            echo '✅ Pipeline completed successfully!'
+        }
+        failure {
+            echo '❌ Pipeline failed. Check the logs above.'
         }
     }
 }
