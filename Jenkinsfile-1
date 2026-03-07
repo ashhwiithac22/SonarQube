@@ -12,15 +12,15 @@ pipeline {
             steps {
                 withSonarQubeEnv(installationName: 'My Sonar Server') {
                     script {
-                        // Get the scanner home
                         def scannerHome = tool 'SonarScanner'
+                        def branchName = env.BRANCH_NAME ?: 'main'  // Get current branch or default to main
                         
-                        // Run sonar-scanner for Python project
                         sh """
                             ${scannerHome}/bin/sonar-scanner \
                             -Dsonar.projectKey=Ex13_A_${JOB_NAME} \
                             -Dsonar.projectName=Exercise13A_Python_Project \
                             -Dsonar.projectVersion=1.0 \
+                            -Dsonar.branch.name=${branchName} \
                             -Dsonar.sources=. \
                             -Dsonar.language=py \
                             -Dsonar.sourceEncoding=UTF-8 \
@@ -34,7 +34,7 @@ pipeline {
         
         stage('Quality Gate') {
             steps {
-                timeout(time: 1, unit: 'MINUTES') {
+                timeout(time: 3, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
@@ -44,14 +44,9 @@ pipeline {
     post {
         always {
             echo 'SonarQube analysis completed!'
-            // Clean up workspace if needed
-            cleanWs()
         }
         success {
             echo 'Pipeline succeeded! Check SonarQube dashboard.'
-        }
-        failure {
-            echo 'Pipeline failed. Check Jenkins logs.'
         }
     }
 }
