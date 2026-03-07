@@ -1,0 +1,84 @@
+pipeline {
+    agent any
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+                script {
+                    echo "📂 Files checked out for Exercise 13B:"
+                    sh 'ls -la'
+                }
+            }
+        }
+        
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv(installationName: 'My Sonar Server') {
+                    script {
+                        def scannerHome = tool 'SonarScanner'
+                        
+                        // Use a DIFFERENT project key for Exercise 13B
+                        sh """
+                            ${scannerHome}/bin/sonar-scanner \
+                            -Dsonar.projectKey=exercise13b \
+                            -Dsonar.projectName="Exercise 13B - Bad Code" \
+                            -Dsonar.sources=. \
+                            -Dsonar.language=py \
+                            -Dsonar.python.version=3 \
+                            -Dsonar.sourceEncoding=UTF-8 \
+                            -Dsonar.login=squ_2c3ab65244156f297807babd9402e31963835867 \
+                            -Dsonar.exclusions=**/venv/**,**/env/**,**/__pycache__/**,**/.git/**
+                        """
+                        
+                        echo "✅ Analysis submitted for Exercise 13B!"
+                    }
+                }
+            }
+        }
+        
+        stage('Quality Gate') {
+            steps {
+                script {
+                    echo "⏳ Waiting for Quality Gate results..."
+                    
+                    // This will FAIL the build if quality gate is not passed
+                    timeout(time: 2, unit: 'MINUTES') {
+                        def qg = waitForQualityGate()
+                        
+                        if (qg.status != 'OK') {
+                            error "❌ QUALITY GATE FAILED! Build stopped. Status: ${qg.status}"
+                        } else {
+                            echo "✅ Quality Gate PASSED!"
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Deploy (Should NOT run if Quality Gate fails)') {
+            steps {
+                echo "🚀 This stage should NOT run if Quality Gate fails!"
+                echo "If you see this, something is wrong!"
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo '''
+            ╔══════════════════════════════════════════════════════════╗
+            ║  📊 EXERCISE 13B RESULTS:                               ║
+            ║  http://localhost:9000/dashboard?id=exercise13b         ║
+            ╚══════════════════════════════════════════════════════════╝
+            '''
+            cleanWs()
+        }
+        success {
+            echo '✅ Pipeline succeeded (Quality Gate passed)!'
+        }
+        failure {
+            echo '❌ Pipeline failed (Quality Gate rejected the code)!'
+        }
+    }
+}
