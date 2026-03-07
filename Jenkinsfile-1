@@ -1,16 +1,6 @@
 pipeline {
     agent any
     
-    // Commented out the empty tools section
-    // tools {
-    //     // Remove this entire block if no tools are configured
-    // }
-    
-    environment {
-        // Define scanner tool from Global Tool Configuration
-        scannerHome = tool 'SonarScanner'
-    }
-    
     stages {
         stage('Checkout') {
             steps {
@@ -21,16 +11,30 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv(installationName: 'My Sonar Server') {
-                    // For Maven project
-                    sh 'mvn clean verify sonar:sonar'
+                    script {
+                        // Get the scanner home
+                        def scannerHome = tool 'SonarScanner'
+                        
+                        // Run sonar-scanner for Python project
+                        sh """
+                            ${scannerHome}/bin/sonar-scanner \
+                            -Dsonar.projectKey=Ex13_A_${JOB_NAME} \
+                            -Dsonar.projectName=Exercise13A_Python_Project \
+                            -Dsonar.projectVersion=1.0 \
+                            -Dsonar.sources=. \
+                            -Dsonar.language=py \
+                            -Dsonar.sourceEncoding=UTF-8 \
+                            -Dsonar.python.version=3 \
+                            -Dsonar.exclusions=**/venv/**,**/env/**,**/__pycache__/**
+                        """
+                    }
                 }
             }
         }
         
-        // Optional: Add Quality Gate check
         stage('Quality Gate') {
             steps {
-                timeout(time: 5, unit: 'MINUTES') {
+                timeout(time: 1, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
@@ -40,6 +44,8 @@ pipeline {
     post {
         always {
             echo 'SonarQube analysis completed!'
+            // Clean up workspace if needed
+            cleanWs()
         }
         success {
             echo 'Pipeline succeeded! Check SonarQube dashboard.'
