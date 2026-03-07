@@ -1,0 +1,111 @@
+pipeline {
+    agent any
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+                script {
+                    echo "📂 Files checked out for Exercise 13C:"
+                    sh 'ls -la'
+                }
+            }
+        }
+        
+        stage('Install Dependencies') {
+            steps {
+                script {
+                    echo "📦 Installing pytest for unit tests..."
+                    sh 'pip3 install pytest || pip install pytest'
+                }
+            }
+        }
+        
+        stage('Run Unit Tests') {
+            steps {
+                script {
+                    echo "🧪 Running unit tests..."
+                    // This will fail if tests fail
+                    sh 'pytest test_goodcode.py -v --tb=short || exit 1'
+                }
+            }
+        }
+        
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv(installationName: 'My Sonar Server') {
+                    script {
+                        def scannerHome = tool 'SonarScanner'
+                        
+                        // Analyze the FIXED code
+                        sh """
+                            ${scannerHome}/bin/sonar-scanner \
+                            -Dsonar.projectKey=exercise13c \
+                            -Dsonar.projectName="Exercise 13C - Fixed Code" \
+                            -Dsonar.sources=. \
+                            -Dsonar.language=py \
+                            -Dsonar.python.version=3 \
+                            -Dsonar.sourceEncoding=UTF-8 \
+                            -Dsonar.login=squ_2c3ab65244156f297807babd9402e31963835867 \
+                            -Dsonar.exclusions=**/venv/**,**/env/**,**/__pycache__/**,**/.git/**,badcode.py \
+                            -Dsonar.python.coverage.reportPaths=coverage.xml \
+                            -Dsonar.coverage.exclusions=**/test_*.py
+                        """
+                        
+                        echo "✅ Analysis submitted for Exercise 13C!"
+                    }
+                }
+            }
+        }
+        
+        stage('Quality Gate') {
+            steps {
+                script {
+                    echo "⏳ Waiting for Quality Gate results..."
+                    
+                    timeout(time: 2, unit: 'MINUTES') {
+                        def qg = waitForQualityGate()
+                        
+                        if (qg.status != 'OK') {
+                            error "❌ QUALITY GATE FAILED! Status: ${qg.status}"
+                        } else {
+                            echo "✅ Quality Gate PASSED! Code is clean!"
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Deploy (Success Path)') {
+            steps {
+                echo "🚀 DEPLOYING to AWS/Azure/VM..."
+                echo "✅ Code passed all quality checks!"
+                echo "✅ Unit tests passed!"
+                echo "✅ No bugs or vulnerabilities!"
+                echo "✅ Deployment successful!"
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo '''
+            ╔══════════════════════════════════════════════════════════╗
+            ║  📊 EXERCISE 13C RESULTS:                               ║
+            ║  http://localhost:9000/dashboard?id=exercise13c         ║
+            ║                                                          ║
+            ║  ✅ Fixed code analyzed                                 ║
+            ║  ✅ Unit tests executed                                 ║
+            ║  ✅ Quality gate enforced                               ║
+            ╚══════════════════════════════════════════════════════════╝
+            '''
+            cleanWs()
+        }
+        success {
+            echo '✅🎉 EXERCISE 13C COMPLETE! Pipeline succeeded!'
+        }
+        failure {
+            echo '❌ Pipeline failed. Check the logs and fix issues.'
+        }
+    }
+}
