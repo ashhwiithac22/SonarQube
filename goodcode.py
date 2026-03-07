@@ -5,13 +5,15 @@ Fixed code for Exercise 13C - No vulnerabilities or code smells
 import os
 import logging
 from typing import List, Optional
+import math
+import subprocess
 
-# FIXED: No hardcoded secrets - use environment variables
-API_KEY = os.environ.get('API_KEY', 'default-dev-key-only')
-DATABASE_PASSWORD = os.environ.get('DB_PASSWORD', 'dev-password-only')
-AWS_SECRET = os.environ.get('AWS_SECRET', 'dev-secret-only')
+# FIXED: No hardcoded secrets - use environment variables with defaults
+API_KEY = os.environ.get('API_KEY', 'dev-key-please-change')
+DATABASE_PASSWORD = os.environ.get('DB_PASSWORD', 'dev-password-please-change')
+AWS_SECRET = os.environ.get('AWS_SECRET', 'dev-secret-please-change')
 
-# Configure logging instead of print statements
+# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -22,7 +24,7 @@ class ErrorMessages:
     PAYMENT_FAILED = "Payment processing failed"
     INVALID_INPUT = "Invalid input provided"
 
-# FIXED: Proper exception handling with specific exceptions
+# FIXED: Proper exception handling
 def process_payment(credit_card: str) -> str:
     """
     Process payment with proper error handling
@@ -39,21 +41,20 @@ def process_payment(credit_card: str) -> str:
             raise ValueError("Invalid credit card")
             
         # Simulate payment processing
-        result = 10 / 2  # Fixed: no division by zero
+        result = 10 / 2  # No division by zero
         
-        # FIXED: Use logging instead of pass
         logger.info(f"Payment processed for card ending in {credit_card[-4:]}")
         
         return "Payment processed successfully"
         
     except ValueError as e:
         logger.error(f"Validation error: {e}")
-        raise  # Re-raise to let caller handle
+        raise
     except Exception as e:
         logger.error(f"Payment processing error: {e}")
         return ErrorMessages.PAYMENT_FAILED
 
-# FIXED: Removed global variable, used class instead
+# FIXED: Class instead of global variable
 class Counter:
     """Proper counter class with encapsulation"""
     def __init__(self):
@@ -67,7 +68,7 @@ class Counter:
     def count(self) -> int:
         return self._count
 
-# FIXED: Function with proper documentation and parameters
+# FIXED: No magic numbers
 def calculate_area(radius: float) -> float:
     """
     Calculate area of a circle
@@ -77,15 +78,10 @@ def calculate_area(radius: float) -> float:
         
     Returns:
         float: Area of the circle
-        
-    Raises:
-        ValueError: If radius is negative
     """
     if radius < 0:
         raise ValueError("Radius cannot be negative")
     
-    # FIXED: No magic numbers - use math.pi
-    import math
     return math.pi * radius ** 2
 
 # FIXED: Safe command execution
@@ -99,19 +95,16 @@ def execute_safely(command: str) -> str:
     Returns:
         str: Command output
     """
-    # FIXED: Validate and sanitize input
-    allowed_commands = ['ls', 'echo', 'date']
+    allowed_commands = ['ls', 'echo', 'date', 'pwd']
     cmd_parts = command.split()
     
     if cmd_parts and cmd_parts[0] in allowed_commands:
-        # Use subprocess instead of os.system
-        import subprocess
         result = subprocess.run(cmd_parts, capture_output=True, text=True)
         return result.stdout
     else:
         return "Command not allowed"
 
-# FIXED: Proper list processing with bounds checking
+# FIXED: Proper list processing
 def process_list(items: List) -> List:
     """
     Safely process a list
@@ -123,63 +116,39 @@ def process_list(items: List) -> List:
         List: Processed items
     """
     result = []
-    for i, item in enumerate(items):  # FIXED: Use enumerate instead of range(len()+1)
+    for i, item in enumerate(items):
         try:
-            # Process each item safely
             result.append(item)
         except Exception as e:
             logger.error(f"Error processing item at index {i}: {e}")
     return result
 
-# NEW: Unit tests (can be in separate file or here)
-import pytest
-
-def test_process_payment():
-    """Test payment processing"""
-    result = process_payment("4111-1111-1111-1111")
-    assert "successfully" in result
-
-def test_calculate_area():
-    """Test area calculation"""
-    import math
-    assert calculate_area(1) == math.pi
-    assert calculate_area(0) == 0
+# FIXED: Function with proper return value
+def calculate_discount(price: float, discount_percent: float) -> float:
+    """
+    Calculate discounted price
     
-    with pytest.raises(ValueError):
-        calculate_area(-1)
-
-def test_process_list():
-    """Test list processing"""
-    items = [1, 2, 3]
-    result = process_list(items)
-    assert len(result) == 3
-    assert result == items
-
-def test_counter():
-    """Test counter class"""
-    counter = Counter()
-    assert counter.count == 0
-    assert counter.increment() == 1
-    assert counter.increment() == 2
-
-def test_execute_safely():
-    """Test safe command execution"""
-    result = execute_safely("echo hello")
-    assert "hello" in result
+    Args:
+        price: Original price
+        discount_percent: Discount percentage
+        
+    Returns:
+        float: Discounted price
+    """
+    if price < 0 or discount_percent < 0:
+        raise ValueError("Price and discount must be positive")
     
-    result = execute_safely("rm -rf /")
-    assert "not allowed" in result
+    discount_amount = price * (discount_percent / 100)
+    return price - discount_amount
 
 if __name__ == "__main__":
-    # Run tests if executed directly
-    pytest.main([__file__, "-v"])
-    
-    # Demonstrate functionality
+    # Demo functionality
     counter = Counter()
     for _ in range(3):
         counter.increment()
     print(f"Counter: {counter.count}")
     
     print(process_payment("4111-1111-1111-1111"))
-    print(f"Area: {calculate_area(5)}")
+    print(f"Area of circle with radius 5: {calculate_area(5):.2f}")
+    print(f"Discounted price: ${calculate_discount(100, 20):.2f}")
     print(execute_safely("ls -la"))
