@@ -4,9 +4,12 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
+                // Get code from GitHub
                 checkout scm
+                
+                // Show what files we have (optional)
                 script {
-                    echo "📂 Files checked out:"
+                    echo "📂 Files in workspace:"
                     sh 'ls -la'
                 }
             }
@@ -14,19 +17,18 @@ pipeline {
         
         stage('SonarQube Analysis') {
             steps {
+                // Use SonarQube server configured in Jenkins
                 withSonarQubeEnv(installationName: 'My Sonar Server') {
                     script {
+                        // Get SonarScanner tool
                         def scannerHome = tool 'SonarScanner'
                         
-                        // REMOVED sonar.branch.name - Community Edition doesn't support it
+                        // Run analysis - NO BRANCH PARAMETERS, NO COMPLICATIONS
                         sh """
                             ${scannerHome}/bin/sonar-scanner \
                             -Dsonar.projectKey=exercise13a \
                             -Dsonar.projectName="Exercise 13A" \
                             -Dsonar.sources=. \
-                            -Dsonar.language=py \
-                            -Dsonar.python.version=3 \
-                            -Dsonar.sourceEncoding=UTF-8 \
                             -Dsonar.login=squ_2c3ab65244156f297807babd9402e31963835867
                         """
                         
@@ -39,9 +41,13 @@ pipeline {
         stage('Verify') {
             steps {
                 script {
-                    echo "⏳ Waiting 10 seconds for processing..."
+                    // Wait a moment for processing
+                    echo "⏳ Waiting 10 seconds for SonarQube to process..."
                     sleep(10)
-                    echo "📊 View results at: http://localhost:9000/dashboard?id=exercise13a"
+                    
+                    // Show the URL
+                    echo "📊 VIEW YOUR RESULTS HERE:"
+                    echo "http://localhost:9000/dashboard?id=exercise13a"
                 }
             }
         }
@@ -49,23 +55,26 @@ pipeline {
     
     post {
         always {
+            // Always show the URL
             echo '''
             ╔══════════════════════════════════════════════════════════╗
-            ║  ✅ EXERCISE 13A COMPLETED SUCCESSFULLY!                ║
+            ║  ✅ EXERCISE 13A COMPLETE!                              ║
             ║                                                          ║
-            ║  📊 SONARQUBE DASHBOARD:                                ║
+            ║  📊 OPEN THIS URL IN YOUR BROWSER:                      ║
             ║  http://localhost:9000/dashboard?id=exercise13a         ║
             ║                                                          ║
-            ║  The project will show all files in the default branch  ║
+            ║  Your code has been analyzed successfully!              ║
             ╚══════════════════════════════════════════════════════════╝
             '''
+            
+            // Clean up workspace
             cleanWs()
         }
         success {
-            echo '✅ Pipeline completed successfully!'
+            echo '✅ Pipeline succeeded!'
         }
         failure {
-            echo '❌ Pipeline failed. Check the logs above.'
+            echo '❌ Pipeline failed. Check logs above.'
         }
     }
 }
