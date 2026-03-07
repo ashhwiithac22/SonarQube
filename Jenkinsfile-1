@@ -6,7 +6,7 @@ pipeline {
             steps {
                 checkout scm
                 script {
-                    // List files to verify checkout
+                    echo "📂 Files in workspace:"
                     sh 'ls -la'
                 }
             }
@@ -18,33 +18,22 @@ pipeline {
                     script {
                         def scannerHome = tool 'SonarScanner'
                         
-                        // REMOVED the branch parameter - not needed for Community Edition
+                        // SIMPLE - let sonar-project.properties handle everything
                         sh """
-                            ${scannerHome}/bin/sonar-scanner \
-                            -Dsonar.projectKey=Ex13_A_${JOB_NAME} \
-                            -Dsonar.projectName=Exercise13A_Python_Project \
-                            -Dsonar.projectVersion=1.0 \
-                            -Dsonar.sources=. \
-                            -Dsonar.language=py \
-                            -Dsonar.sourceEncoding=UTF-8 \
-                            -Dsonar.python.version=3 \
-                            -Dsonar.exclusions=**/venv/**,**/env/**,**/__pycache__/**
+                            ${scannerHome}/bin/sonar-scanner
                         """
+                        
+                        echo "✅ Analysis complete! Check results in 1 minute at: http://localhost:9000/dashboard?id=python-exercise-13a"
                     }
                 }
             }
         }
         
-        stage('Quality Gate') {
+        stage('Wait for Results') {
             steps {
                 script {
-                    try {
-                        timeout(time: 2, unit: 'MINUTES') {
-                            waitForQualityGate abortPipeline: false
-                        }
-                    } catch (Exception e) {
-                        echo "Quality Gate check timed out: ${e.message}"
-                    }
+                    echo "⏳ Waiting 30 seconds for SonarQube to process..."
+                    sleep(30)
                 }
             }
         }
@@ -52,17 +41,17 @@ pipeline {
     
     post {
         always {
-            echo 'SonarQube analysis completed!'
-            echo "View results at: http://localhost:9000/dashboard?id=Ex13_A_${JOB_NAME}"
+            echo '''
+            ╔════════════════════════════════════════════════════════════╗
+            ║  🎯 SONARQUBE ANALYSIS COMPLETE!                          ║
+            ║  📊 View your results at:                                 ║
+            ║  http://localhost:9000/dashboard?id=python-exercise-13a   ║
+            ╚════════════════════════════════════════════════════════════╝
+            '''
+            cleanWs()
         }
         success {
-            echo '✅ Pipeline completed successfully!'
-        }
-        failure {
-            echo '❌ Pipeline failed. Check Jenkins logs for details.'
-        }
-        cleanup {
-            cleanWs()
+            echo '✅ Pipeline succeeded!'
         }
     }
 }
