@@ -1,0 +1,12 @@
+{
+    "name": "persistent-app",
+    "version": "1.0.0",
+    "description": "Persistent App for Kubernetes",
+    "main": "app.js",
+    "scripts": {
+        "start": "node app.js"
+    },
+    "dependencies": {
+        "express": "^4.18.2"
+    }
+}
