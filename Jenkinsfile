@@ -1,10 +1,6 @@
 pipeline {
     agent any
     
-    tools {
-        maven 'Maven-3'
-    }
-    
     environment {
         SONAR_TOKEN = credentials('sonarqube-token')
         GITHUB_TOKEN = credentials('github-token')
