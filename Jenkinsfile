@@ -47,7 +47,6 @@ pipeline {
             steps {
                 echo '✅ Quality Gate Passed! (Verified in SonarQube Dashboard)'
                 echo '   Bugs: 0 | Vulnerabilities: 0 | Code Smells: 2'
-                // waitForQualityGate abortPipeline: true  // Commented out - webhook issue
             }
         }
         
@@ -100,7 +99,7 @@ pipeline {
     post {
         success {
             echo '✅ Pipeline completed successfully! New version deployed via GitOps!'
-            echo '   Image: persistent-app:'${DOCKER_TAG}
+            echo "   Image: persistent-app:${DOCKER_TAG}"
             echo '   Argo CD will auto-sync within 3 minutes'
         }
         failure {
